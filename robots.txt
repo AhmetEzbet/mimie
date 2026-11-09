@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://mimie3d.vercel.app/sitemap.xml
