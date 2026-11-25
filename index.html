@@ -229,9 +229,20 @@ html.lock{overflow:hidden}
  #lb .nv{display:none}
 }
 @media (min-width:901px){.grab{display:none}.tprev{display:contents}}
+#ld{position:fixed;inset:0;z-index:200;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;transition:transform .9s cubic-bezier(.76,0,.24,1);animation:ldS .9s cubic-bezier(.76,0,.24,1) 3.4s forwards}
+#ld.out{transform:translateY(-101%)}
+@keyframes ldS{to{transform:translateY(-101%);visibility:hidden}}
+.ld-lg{position:relative;width:min(52vw,300px);aspect-ratio:712/506}
+.ld-lg img{width:100%;height:100%;object-fit:contain;clip-path:inset(100% 0 0 0);transition:clip-path 1.4s cubic-bezier(.65,0,.35,1)}
+#ld.go .ld-lg img{clip-path:inset(0)}
+.ld-lg i{position:absolute;left:-6%;right:-6%;top:100%;height:2px;background:linear-gradient(90deg,transparent,#b8485f,transparent);opacity:0;transition:top 1.4s cubic-bezier(.65,0,.35,1),opacity .3s}
+#ld.go .ld-lg i{top:0;opacity:1}#ld.end .ld-lg i{opacity:0}
+.ld-t{font-size:13px;line-height:20px;color:var(--ink2);font-variant-numeric:tabular-nums}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
 </style></head>
 <body>
+<div id="ld" aria-hidden="true"><div class="ld-lg"><img src="assets/logo.webp" alt="" width="712" height="506"><i></i></div><span class="ld-t">katman katman basılıyor · <b id="ldN">00</b>%</span></div>
+<script>(function(){var l=document.getElementById('ld'),d=document.documentElement;try{if(sessionStorage.getItem('mld')||matchMedia('(prefers-reduced-motion: reduce)').matches){l.remove();return}sessionStorage.setItem('mld','1')}catch(e){}d.classList.add('lock');setTimeout(function(){d.classList.remove('lock')},4400);var n=document.getElementById('ldN'),im=l.querySelector('img'),st=0;function go(){if(st)return;st=1;l.classList.add('go');var t0=performance.now();(function f(t){var p=Math.max(0,Math.min(1,(t-t0)/1400));var e=p<.5?4*p*p*p:1-Math.pow(-2*p+2,3)/2,v=Math.round(e*100);n.textContent=v<10?'0'+v:v;if(p<1)requestAnimationFrame(f);else{l.classList.add('end');setTimeout(function(){l.classList.add('out');d.classList.remove('lock');setTimeout(function(){l.remove()},950)},300)}})(t0)}if(im.complete)requestAnimationFrame(function(){requestAnimationFrame(go)});else{im.onload=function(){requestAnimationFrame(go)};im.onerror=go;setTimeout(go,1200)}})();</script>
 <header class="hd" id="hd"><div class="w"><a class="lg" href="#top" aria-label="Mimie ana sayfa"><img src="assets/logo.webp" alt="Mimie" width="712" height="506"></a>
 <nav aria-label="Bölümler"><a href="#clicker">Clicker</a><a href="#tag">Tag</a><a href="#mini">Mini</a><a href="#siparis">Sipariş</a></nav>
 <a class="btn btn-o" href="#siparis">Sipariş</a></div></header>
