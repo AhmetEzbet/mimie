@@ -37,6 +37,32 @@
 
   /* ---------- product dialog ---------- */
   var pd = $('#pd'), pdImg = $('#pdImg'), pdI = $('#pdI'), pdT = $('#pdT'), pdF = $('#pdF'), pdR = $('#pdR'), pdWa = $('#pdWa'), pdBack = $('#pdBack'), lastFocus = null;
+
+  /* ---------- kişiselleştirme (adet, isim karosu, hediye, özel istek) ---------- */
+  function cleanName(v) { return (v || '').replace(/[^A-Za-zÇĞİÖŞÜçğıöşü0-9]/g, '').slice(0, 6); }
+  function upTR(s) { return s.toLocaleUpperCase('tr'); }
+  function extras(root, onChange) {
+    var q = 1, qv = $('[data-qv]', root), minus = $('[data-q="-1"]', root), xn = $('[data-xn]', root), xg = $('[data-xg]', root), gn = $('.gn', root), xgn = $('[data-xgn]', root), xr = $('[data-xr]', root);
+    function setQ(n) { q = Math.max(1, Math.min(20, n)); qv.textContent = q; minus.disabled = q === 1; }
+    $$('[data-q]', root).forEach(function (bt) { bt.addEventListener('click', function () { setQ(q + +bt.dataset.q); onChange(); }); });
+    if (xn) xn.addEventListener('input', function () { var c = cleanName(xn.value); if (c !== xn.value) xn.value = c; onChange(); });
+    xg.addEventListener('change', function () { gn.hidden = !xg.checked; onChange(); });
+    xgn.addEventListener('input', onChange); xr.addEventListener('input', onChange);
+    setQ(1);
+    return {
+      qty: function () { return q; },
+      lines: function () {
+        var L = ['Adet: ' + q];
+        if (xn && xn.value) L.push('İsim karosu: ' + upTR(xn.value));
+        if (xg.checked) L.push('Hediye paketi: Evet' + (xgn.value.trim() ? ' — kart notu: "' + xgn.value.trim() + '"' : ''));
+        if (xr.value.trim()) L.push('Özel istek: ' + xr.value.trim());
+        return '\n' + L.join('\n');
+      },
+      reset: function () { setQ(1); if (xn) xn.value = ''; xg.checked = false; gn.hidden = true; xgn.value = ''; xr.value = ''; }
+    };
+  }
+  var pdMsg = function () { return ''; };
+  var exP = extras($('#pd [data-ex]'), function () { pdWa.href = wa(pdMsg()); });
   function swap(img, src, cb) { if (reduce) { img.src = src; cb && cb(); return; } img.classList.add('fd'); setTimeout(function () { img.onload = function () { img.classList.remove('fd'); img.onload = null; }; img.src = src; cb && cb(); }, 160); }
   function openDialog(d) { lastFocus = document.activeElement; d.showModal(); document.documentElement.classList.add('lock'); }
   function closeDialog(d) { d.close(); }
@@ -49,21 +75,21 @@
     btn.addEventListener('click', function () {
       var id = btn.dataset.id, P = DATA[id], photo = 'assets/real/' + id + '.webp';
       $('#pdN').textContent = P.name; $('#pdD').textContent = DESC[id];
-      $('#pdCr').textContent = CRED[id];
+      $('#pdCr').textContent = CRED[id]; exP.reset();
       pdImg.src = photo; pdImg.alt = P.name + ' — gerçek fotoğraf'; pdI.classList.remove('rd'); pdT.textContent = 'Gerçek fotoğraf'; pdR.textContent = ''; pdBack.classList.remove('on');
       $('#pdBackI').src = 'assets/real/' + id + '-s.webp';
       var groups = [];
       if (P.kind === 'pal') pdF.innerHTML = swHTML('c', 'Renk', PAL, P.def);
       else if (P.kind === 'flav') pdF.innerHTML = swHTML('c', 'Lezzet', FLAV, P.def);
       else if (P.kind === 'dual') pdF.innerHTML = swHTML('c', '1. renk · alt', PAL, P.def[0]) + swHTML('c2', '2. renk · üst', PAL, P.def[1]);
-      else pdF.innerHTML = '<p class="ds" style="margin:0 0 24px">Bu model fotoğraftaki renklerle basılır.</p>';
+      else pdF.innerHTML = '<p class="ds" style="margin:0 0 24px">Fotoğraftaki renklerle basılır. Farklı renk istersen aşağıdaki özel istek kısmına yaz.</p>';
       function state() { return groups.map(function (g) { return g.val(); }); }
       function isDef(s) { return P.kind === 'dual' ? (s[0].c === P.def[0] && s[1].c === P.def[1]) : (!s.length || s[0].c === P.def); }
       function msg(s) { return 'Merhaba Mimie! ' + P.name + (s.length ? ' — ' + s.map(function (x) { return x.n; }).join(' / ') : '') + ' sipariş etmek istiyorum.'; }
       function update(animate) {
         var s = state();
         $$('[data-o]', pdF).forEach(function (o, i) { o.textContent = s[i].n; });
-        pdWa.href = wa(msg(s));
+        pdMsg = function () { return msg(s) + exP.lines(); }; pdWa.href = wa(pdMsg());
         if (!s.length) return;
         var def = isDef(s);
         var src = def ? photo : 'assets/p/v/' + id + '-' + s.map(function (x) { return H(x.c); }).join('-') + '.webp';
@@ -83,6 +109,7 @@
     var g = {}; $$('[data-k]', tb).forEach(function (el) { g[el.dataset.k] = radio(el, function () { render(); }); });
     var name = $('#tName'), cnt = $('#tCnt'), hint = $('#tHint'), stack = $('#stack'), ph = $('#tPh'), sum = $('#tSum'), waBtn = $('#tWa');
     var curPhoto = 'tag-5li-pembe';
+    var exT = extras($('#tb [data-ex]'), function () { render(); });
     var STRAP = {
       clip: '<svg class="strap" viewBox="0 0 120 56" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round"><path d="M60 54V40"/><path d="M60 40c-14 0-22-8-22-18S46 4 60 4s22 8 22 18"/><path d="M82 22v12"/></svg>',
       beads: '<svg class="strap" viewBox="0 0 120 56" fill="currentColor"><circle cx="60" cy="50" r="5"/><circle cx="56" cy="40" r="5"/><circle cx="50" cy="31" r="5"/><circle cx="42" cy="23" r="5"/><circle cx="33" cy="17" r="5"/><circle cx="23" cy="13" r="5"/><path d="M8 8c6-4 12-3 14 2-3 5-9 6-14 2z"/></svg>'
@@ -102,9 +129,9 @@
       var k = PHOTO_BY_BODY[body.c.toUpperCase()] || 'tag-sari';
       if (k !== curPhoto) { curPhoto = k; swap(ph, 'assets/real/' + k + '-s.webp'); ph.alt = 'Gerçek baskı örneği: Mimie Tag'; }
       var nm = up(c || '');
-      var rows = [['İsim', nm || '—'], ['Gövde', body.n], ['Karo', tile.n], ['Harf & ikon', ink.n], ['İkon', ic.n], ['Askı', st.n]];
+      var rows = [['İsim', nm || '—'], ['Gövde', body.n], ['Karo', tile.n], ['Harf & ikon', ink.n], ['İkon', ic.n], ['Askı', st.n], ['Adet', exT.qty()]];
       sum.innerHTML = rows.map(function (r) { return '<li><span>' + r[0] + '</span><b>' + r[1] + '</b></li>'; }).join('');
-      waBtn.href = wa('Merhaba Mimie! Bir Mimie Tag sipariş etmek istiyorum.\n' + rows.map(function (r) { return r[0] + ': ' + r[1]; }).join('\n'));
+      waBtn.href = wa('Merhaba Mimie! Mimie Tag sipariş etmek istiyorum.\n' + rows.slice(0, 6).map(function (r) { return r[0] + ': ' + r[1]; }).join('\n') + exT.lines());
     }
     name.addEventListener('input', render);
     stack.addEventListener('pointerdown', function (e) { var t = e.target.closest('.tile'); if (!t) return; t.classList.add('dn'); if (navigator.vibrate) navigator.vibrate(8); setTimeout(function () { t.classList.remove('dn'); }, 120); });
